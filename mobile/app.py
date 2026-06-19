@@ -30,8 +30,9 @@ def main(page: ft.Page):
             upload_status.color = ft.Colors.GREY_500
         page.update()
 
-    file_picker = ft.FilePicker(on_change=on_file_result)
-    page.overlay.append(file_picker)
+    # Instantiated cleanly without keyword argument properties
+    file_picker = ft.FilePicker()
+    file_picker.on_change = on_file_result
 
 
     upload_status = ft.Text("No file selected", color=ft.Colors.GREY_500, size=13)
