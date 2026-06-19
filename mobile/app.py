@@ -16,7 +16,8 @@ def main(page: ft.Page):
 
     uploaded_image_bytes = None
 
-    def on_file_result(e: ft.FilePickerResultEvent):
+# Change ft.FilePickerResultEvent to ft.ControlEvent
+    def on_file_result(e: ft.ControlEvent):
         nonlocal uploaded_image_bytes
         if e.files:
             file_path = e.files[0].path
