@@ -1,7 +1,7 @@
 import flet as ft
 import requests
 
-# Base configuration for backend routing
+
 BACKEND_URL = "http://127.0.0.1:8000/api/v1/validate-case"
 
 def main(page: ft.Page):
@@ -11,9 +11,6 @@ def main(page: ft.Page):
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.scroll = ft.ScrollMode.ADAPTIVE
 
-    # ----------------------------------------------------
-    # SCREEN 2: Main Dashboard (AI Diagnostic & Validation)
-    # ----------------------------------------------------
     def show_main_dashboard(e):
         page.clean()
         
@@ -40,8 +37,6 @@ def main(page: ft.Page):
             page.update()
 
             try:
-                # Mocking file upload layer for local file paths
-                # In production, this utilizes flet's FilePicker component
                 files = {"file": ("sample.jpg", b"dummy_bytes", "image/jpeg")}
                 data = {
                     "prescription": prescription_input.value,
@@ -71,10 +66,6 @@ def main(page: ft.Page):
         )
         page.update()
 
-    # ----------------------------------------------------
-    # SCREEN 1: Onboarding / Welcome Screen
-    # ----------------------------------------------------
-    # Brand Typography & Explanatory Cards
     app_title = ft.Text(
         value="OrthoAssist AI", 
         size=32, 
@@ -125,7 +116,6 @@ def main(page: ft.Page):
         style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
     )
 
-    # Initialize App with the Onboarding UI view
     page.add(
         ft.Column(
             controls=[
@@ -143,6 +133,6 @@ def main(page: ft.Page):
         )
     )
 
-# Run application interface locally
+
 if __name__ == "__main__":
     ft.app(target=main)
