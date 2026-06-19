@@ -163,8 +163,7 @@ def main(page: ft.Page):
                 "• Optional Pharmacological Validation: Analyzes custom medication workflows against active anatomical diagnostic traits.\n\n"
                 "• Automated Diagnostic Reporting: Delivers clean, structured analysis summaries instantly utilizing advanced generative language reasoning.",
                 size=13,
-                color=ft.Colors.GREY_300,
-                line_height=1.4
+                color=ft.Colors.GREY_300
             )
         ], spacing=10),
         padding=25,
