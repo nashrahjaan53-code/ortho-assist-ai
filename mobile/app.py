@@ -1,6 +1,7 @@
 import flet as ft
 import requests
-
+from PIL import Image
+import io
 
 BACKEND_URL = "http://127.0.0.1:8000/api/v1/validate-case"
 
@@ -14,7 +15,6 @@ def main(page: ft.Page):
     def show_main_dashboard(e):
         page.clean()
         
-        # UI Input Fields
         history_input = ft.TextField(
             label="Patient History & Symptoms", 
             multiline=True, 
@@ -37,29 +37,36 @@ def main(page: ft.Page):
             page.update()
 
             try:
-                files = {"file": ("sample.jpg", b"dummy_bytes", "image/jpeg")}
+                # Create a valid 224x224 blank image in memory so PyTorch doesn't crash
+                img = Image.new('RGB', (224, 224), color='black')
+                img_byte_arr = io.BytesIO()
+                img.save(img_byte_arr, format='JPEG')
+                img_bytes = img_byte_arr.getvalue()
+
+                # Pack the valid image bytes into the payload
+                files = {"file": ("mock_xray.jpg", img_bytes, "image/jpeg")}
                 data = {
                     "prescription": prescription_input.value,
                     "patient_history": history_input.value
                 }
                 
+                # Send request to FastAPI
                 response = requests.post(BACKEND_URL, files=files, data=data, timeout=60)
                 if response.status_code == 200:
                     status_text.value = response.json()["report"]
                 else:
-                    status_text.value = f"API Server Error: {response.status_code}"
+                    status_text.value = f"API Server Error: {response.status_code}\n\n{response.text}"
             except Exception as err:
                 status_text.value = f"Connection failed to backend: {str(err)}"
             
             page.update()
 
-        # Build Dashboard Layout
         page.add(
             ft.Text("OrthoAssist Diagnostic Hub", size=24, weight=ft.FontWeight.BOLD),
             ft.Divider(),
             history_input,
             prescription_input,
-            ft.ElevatedButton("Run AI Safety Check", on_click=submit_case),
+            ft.Button("Run AI Safety Check", on_click=submit_case),
             ft.Divider(),
             ft.Text("Clinical AI Analysis Output:", size=16, weight=ft.FontWeight.W_600),
             status_text
@@ -109,11 +116,10 @@ def main(page: ft.Page):
         width=360
     )
 
-    start_button = ft.ElevatedButton(
-        text="Open Dashboard", 
+    start_button = ft.Button(
+        "Open Dashboard", 
         on_click=show_main_dashboard,
-        width=200,
-        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))
+        width=200
     )
 
     page.add(
@@ -133,6 +139,5 @@ def main(page: ft.Page):
         )
     )
 
-
 if __name__ == "__main__":
-    ft.app(target=main)
+    ft.run(main)
