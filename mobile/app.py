@@ -30,7 +30,7 @@ def main(page: ft.Page):
             upload_status.color = ft.Colors.GREY_500
         page.update()
 
-    file_picker = ft.FilePicker(on_result=on_file_result)
+    file_picker = ft.FilePicker(on_change=on_file_result)
     page.overlay.append(file_picker)
 
 
