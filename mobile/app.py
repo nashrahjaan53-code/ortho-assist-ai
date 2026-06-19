@@ -6,11 +6,34 @@ import io
 BACKEND_URL = "http://127.0.0.1:8000/api/v1/validate-case"
 
 def main(page: ft.Page):
-    page.title = "OrthoAssist Mobile"
+    page.title = "OrthoAssist Mobile Pro"
     page.theme_mode = ft.ThemeMode.DARK
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.scroll = ft.ScrollMode.ADAPTIVE
+    page.padding = 30
+    
+
+    uploaded_image_bytes = None
+
+    def on_file_result(e: ft.FilePickerResultEvent):
+        nonlocal uploaded_image_bytes
+        if e.files:
+            file_path = e.files[0].path
+            with open(file_path, "rb") as f:
+                uploaded_image_bytes = f.read()
+            upload_status.value = f"Selected: {e.files[0].name}"
+            upload_status.color = ft.Colors.BLUE_400
+        else:
+            upload_status.value = "No file selected."
+            upload_status.color = ft.Colors.GREY_500
+        page.update()
+
+    file_picker = ft.FilePicker(on_result=on_file_result)
+    page.overlay.append(file_picker)
+
+
+    upload_status = ft.Text("No file selected", color=ft.Colors.GREY_500, size=13)
 
     def show_main_dashboard(e):
         page.clean()
@@ -19,38 +42,50 @@ def main(page: ft.Page):
             label="Patient History & Symptoms", 
             multiline=True, 
             min_lines=3,
-            hint_text="e.g., 45yo male, suspected wrist fracture..."
+            hint_text="e.g., 45yo male, suspected wrist fracture...",
+            border_color=ft.Colors.BLUE_900,
+            focused_border_color=ft.Colors.BLUE_400
         )
+        
         prescription_input = ft.TextField(
-            label="Prescribed Medication", 
-            hint_text="e.g., Oxycodone 20mg"
+            label="Prescribed Medication (Optional)", 
+            hint_text="e.g., Oxycodone 20mg (Leave blank if none)",
+            border_color=ft.Colors.BLUE_900,
+            focused_border_color=ft.Colors.BLUE_400
         )
+        
         status_text = ft.Markdown(selectable=True)
 
         def submit_case(e):
-            if not history_input.value or not prescription_input.value:
-                status_text.value = "Error: Please complete all input parameters."
+            nonlocal uploaded_image_bytes
+            
+            if not history_input.value.strip():
+                status_text.value = "Please complete the patient history parameter."
                 page.update()
                 return
 
-            status_text.value = "Analyzing data and validating safety parameters..."
+            status_text.value = "Running data synthesis and validating safety parameters..."
             page.update()
 
             try:
-                # Create a valid 224x224 blank image in memory so PyTorch doesn't crash
-                img = Image.new('RGB', (224, 224), color='black')
-                img_byte_arr = io.BytesIO()
-                img.save(img_byte_arr, format='JPEG')
-                img_bytes = img_byte_arr.getvalue()
+                # Fallback to blank image if user didn't upload a file
+                if uploaded_image_bytes is None:
+                    img = Image.new('RGB', (224, 224), color='black')
+                    img_byte_arr = io.BytesIO()
+                    img.save(img_byte_arr, format='JPEG')
+                    final_bytes = img_byte_arr.getvalue()
+                else:
+                    final_bytes = uploaded_image_bytes
 
-                # Pack the valid image bytes into the payload
-                files = {"file": ("mock_xray.jpg", img_bytes, "image/jpeg")}
+                # Treat empty string as a clear declaration that no medication was assigned
+                medication = prescription_input.value.strip() if prescription_input.value else "None prescribed yet."
+
+                files = {"file": ("xray.jpg", final_bytes, "image/jpeg")}
                 data = {
-                    "prescription": prescription_input.value,
+                    "prescription": medication,
                     "patient_history": history_input.value
                 }
                 
-                # Send request to FastAPI
                 response = requests.post(BACKEND_URL, files=files, data=data, timeout=60)
                 if response.status_code == 200:
                     status_text.value = response.json()["report"]
@@ -62,64 +97,98 @@ def main(page: ft.Page):
             page.update()
 
         page.add(
-            ft.Text("OrthoAssist Diagnostic Hub", size=24, weight=ft.FontWeight.BOLD),
-            ft.Divider(),
-            history_input,
-            prescription_input,
-            ft.Button("Run AI Safety Check", on_click=submit_case),
-            ft.Divider(),
-            ft.Text("Clinical AI Analysis Output:", size=16, weight=ft.FontWeight.W_600),
-            status_text
+            ft.Container(
+                content=ft.Column([
+                    ft.Text("OrthoAssist Diagnostic Hub", size=26, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                    ft.Text("Advanced Decision Support Engine", size=13, color=ft.Colors.BLUE_400),
+                    ft.Divider(color=ft.Colors.BLUE_900),
+                ]),
+                margin=ft.margin.only(bottom=15)
+            ),
+            ft.Container(
+                content=ft.Column([
+                    ft.Text("1. Radiograph Attachment", size=15, weight=ft.FontWeight.W_600),
+                    ft.Row([
+                        ft.Button("Select X-Ray Image", on_click=lambda _: file_picker.pick_files(allow_multiple=False, file_type=ft.FilePickerFileType.IMAGE)),
+                        upload_status
+                    ], alignment=ft.MainAxisAlignment.START)
+                ]),
+                padding=20, bgcolor=ft.Colors.SURFACE_CONTAINER_LOW, border_radius=12, border=ft.border.all(1, ft.Colors.BLUE_900)
+            ),
+            ft.Container(height=10),
+            ft.Container(
+                content=ft.Column([
+                    ft.Text("2. Clinical Parameters", size=15, weight=ft.FontWeight.W_600),
+                    history_input,
+                    prescription_input,
+                ], spacing=15),
+                padding=20, bgcolor=ft.Colors.SURFACE_CONTAINER_LOW, border_radius=12, border=ft.border.all(1, ft.Colors.BLUE_900)
+            ),
+            ft.Container(height=15),
+            ft.Button("Execute AI Case Analysis", on_click=submit_case, width=250, bgcolor=ft.Colors.BLUE_700, color=ft.Colors.WHITE),
+            ft.Container(height=15),
+            ft.Container(
+                content=ft.Column([
+                    ft.Text("Analysis Output Report", size=16, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_400),
+                    ft.Divider(color=ft.Colors.GREY_800),
+                    status_text
+                ]),
+                padding=25, bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST, border_radius=12, width=600
+            )
         )
         page.update()
 
+ 
     app_title = ft.Text(
         value="OrthoAssist AI", 
-        size=32, 
+        size=36, 
         weight=ft.FontWeight.BOLD, 
-        text_align=ft.TextAlign.CENTER
+        color=ft.Colors.WHITE
     )
     
     app_subtitle = ft.Text(
-        value="Clinical Decision Support System", 
-        size=16, 
-        color=ft.Colors.BLUE_400,
-        text_align=ft.TextAlign.CENTER
+        value="Intelligent Musculoskeletal Decision Support", 
+        size=14, 
+        color=ft.Colors.BLUE_400
     )
 
     explanation_card = ft.Container(
         content=ft.Column([
+            ft.Text("System Capabilities", size=18, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_200),
+            ft.Divider(color=ft.Colors.BLUE_900),
             ft.Text(
-                "What this application does:", 
-                size=18, 
-                weight=ft.FontWeight.W_600
-            ),
-            ft.Text(
-                "1. Scans orthopedic radiographs using a local vision extraction layer.\n"
-                "2. Cross-references visual indicators with text-based patient charts.\n"
-                "3. Automatically runs cross-checks against target drug descriptions to catch toxic interactions, dosage anomalies, or clinical contraindications before finalized processing.",
-                size=14,
-                color=ft.Colors.GREY_300
+                "• Computer Vision Feature Parsing: Evaluates alignment patterns and dense skeletal structures via an inline processing layer.\n\n"
+                "• Optional Pharmacological Validation: Analyzes custom medication workflows against active anatomical diagnostic traits.\n\n"
+                "• Automated Diagnostic Reporting: Delivers clean, structured analysis summaries instantly utilizing advanced generative language reasoning.",
+                size=13,
+                color=ft.Colors.GREY_300,
+                line_height=1.4
             )
         ], spacing=10),
-        padding=20,
-        border_radius=10,
-        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST,
-        width=400
+        padding=25,
+        border_radius=16,
+        bgcolor=ft.Colors.SURFACE_CONTAINER_LOW,
+        border=ft.border.all(1, ft.Colors.BLUE_900),
+        width=450
     )
 
-    disclaimer_text = ft.Text(
-        value="For educational demonstration and portfolio validation purposes only. Not certified for clinical deployment.",
-        size=11,
-        color=ft.Colors.RED_300,
-        text_align=ft.TextAlign.CENTER,
-        width=360
+    disclaimer_box = ft.Container(
+        content=ft.Text(
+            value="Notice: This system serves as an educational framework demonstration and is not validated for live clinical deployment configurations.",
+            size=11,
+            color=ft.Colors.RED_300,
+            text_align=ft.TextAlign.CENTER
+        ),
+        width=400,
+        padding=10
     )
 
     start_button = ft.Button(
-        "Open Dashboard", 
+        "Access Dashboard", 
         on_click=show_main_dashboard,
-        width=200
+        width=220,
+        bgcolor=ft.Colors.BLUE_600,
+        color=ft.Colors.WHITE
     )
 
     page.add(
@@ -127,12 +196,12 @@ def main(page: ft.Page):
             controls=[
                 app_title,
                 app_subtitle,
-                ft.Container(height=20),
+                ft.Container(height=15),
                 explanation_card,
-                ft.Container(height=30),
+                ft.Container(height=25),
                 start_button,
-                ft.Container(height=20),
-                disclaimer_text
+                ft.Container(height=15),
+                disclaimer_box
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=10
