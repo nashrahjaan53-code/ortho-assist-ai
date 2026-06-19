@@ -12,11 +12,10 @@ def main(page: ft.Page):
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.scroll = ft.ScrollMode.ADAPTIVE
     page.padding = 30
-    
 
     uploaded_image_bytes = None
 
-# Change ft.FilePickerResultEvent to ft.ControlEvent
+
     def on_file_result(e: ft.ControlEvent):
         nonlocal uploaded_image_bytes
         if e.files:
@@ -30,12 +29,13 @@ def main(page: ft.Page):
             upload_status.color = ft.Colors.GREY_500
         page.update()
 
-    # Instantiated cleanly without keyword argument properties
+    # Empty instantiation with post-creation event mapping to bypass keyword errors
     file_picker = ft.FilePicker()
     file_picker.on_change = on_file_result
-
+    page.overlay.append(file_picker)
 
     upload_status = ft.Text("No file selected", color=ft.Colors.GREY_500, size=13)
+
 
     def show_main_dashboard(e):
         page.clean()
@@ -61,7 +61,7 @@ def main(page: ft.Page):
         def submit_case(e):
             nonlocal uploaded_image_bytes
             
-            if not history_input.value.strip():
+            if not history_input.value or not history_input.value.strip():
                 status_text.value = "Please complete the patient history parameter."
                 page.update()
                 return
@@ -70,7 +70,6 @@ def main(page: ft.Page):
             page.update()
 
             try:
-                # Fallback to blank image if user didn't upload a file
                 if uploaded_image_bytes is None:
                     img = Image.new('RGB', (224, 224), color='black')
                     img_byte_arr = io.BytesIO()
@@ -79,8 +78,8 @@ def main(page: ft.Page):
                 else:
                     final_bytes = uploaded_image_bytes
 
-                # Treat empty string as a clear declaration that no medication was assigned
-                medication = prescription_input.value.strip() if prescription_input.value else "None prescribed yet."
+                
+                medication = prescription_input.value.strip() if (prescription_input.value and prescription_input.value.strip()) else "None prescribed yet."
 
                 files = {"file": ("xray.jpg", final_bytes, "image/jpeg")}
                 data = {
@@ -98,6 +97,7 @@ def main(page: ft.Page):
             
             page.update()
 
+        # Fixed layout configurations using standardized 0.85+ architectural classes
         page.add(
             ft.Container(
                 content=ft.Column([
@@ -115,7 +115,10 @@ def main(page: ft.Page):
                         upload_status
                     ], alignment=ft.MainAxisAlignment.START)
                 ]),
-                padding=20, bgcolor=ft.Colors.SURFACE_CONTAINER_LOW, border_radius=12, border=ft.border.all(1, ft.Colors.BLUE_900)
+                padding=20, 
+                bgcolor=ft.Colors.SURFACE_CONTAINER_LOW, 
+                border_radius=12, 
+                border=ft.Border.all(1, ft.Colors.BLUE_900)
             ),
             ft.Container(height=10),
             ft.Container(
@@ -124,7 +127,10 @@ def main(page: ft.Page):
                     history_input,
                     prescription_input,
                 ], spacing=15),
-                padding=20, bgcolor=ft.Colors.SURFACE_CONTAINER_LOW, border_radius=12, border=ft.border.all(1, ft.Colors.BLUE_900)
+                padding=20, 
+                bgcolor=ft.Colors.SURFACE_CONTAINER_LOW, 
+                border_radius=12, 
+                border=ft.Border.all(1, ft.Colors.BLUE_900)
             ),
             ft.Container(height=15),
             ft.Button("Execute AI Case Analysis", on_click=submit_case, width=250, bgcolor=ft.Colors.BLUE_700, color=ft.Colors.WHITE),
@@ -135,12 +141,15 @@ def main(page: ft.Page):
                     ft.Divider(color=ft.Colors.GREY_800),
                     status_text
                 ]),
-                padding=25, bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST, border_radius=12, width=600
+                padding=25, 
+                bgcolor=ft.Colors.SURFACE_CONTAINER_HIGHEST, 
+                border_radius=12, 
+                width=600
             )
         )
         page.update()
 
- 
+  
     app_title = ft.Text(
         value="OrthoAssist AI", 
         size=36, 
@@ -169,7 +178,7 @@ def main(page: ft.Page):
         padding=25,
         border_radius=16,
         bgcolor=ft.Colors.SURFACE_CONTAINER_LOW,
-        border=ft.border.all(1, ft.Colors.BLUE_900),
+        border=ft.Border.all(1, ft.Colors.BLUE_900),
         width=450
     )
 
