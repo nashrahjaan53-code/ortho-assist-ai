@@ -20,7 +20,7 @@ A clinical decision-support prototype that combines **Computer Vision**, **Large
 The screenshot below showcases the Streamlit interface of **OrthoAssist AI**, where clinicians can upload musculoskeletal X-rays, provide patient history, enter prescribed medications, and receive an AI-assisted diagnostic and prescription safety assessment.
 
 <p align="center">
-  <img src="./orthoassist-dashboard.png" alt="OrthoAssist AI Dashboard" width="90%">
+  <img src="Screenshot 2026-06-17 194904.png" alt="OrthoAssist AI Dashboard" width="90%">
 </p>
 
 ---
