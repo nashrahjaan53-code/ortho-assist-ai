@@ -13,6 +13,18 @@
 A clinical decision-support prototype that combines **Computer Vision**, **Large Language Models**, and **Medical Safety Validation** to analyze orthopedic X-rays, interpret patient history, and evaluate prescription safety in a unified workflow.
 
 </div>
+---
+
+# 🖥️ Application Preview
+
+The screenshot below showcases the Streamlit interface of **OrthoAssist AI**, where clinicians can upload musculoskeletal X-rays, provide patient history, enter prescribed medications, and receive an AI-assisted diagnostic and prescription safety assessment.
+
+<p align="center">
+  <img src="./orthoassist-dashboard.png" alt="OrthoAssist AI Dashboard" width="90%">
+</p>
+
+---
+
 
 ---
 
